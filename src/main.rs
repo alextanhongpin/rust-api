@@ -5,10 +5,7 @@
 extern crate rocket;
 extern crate rocket_contrib;
 extern crate serde;
-
-#[macro_use]
 extern crate serde_json;
-
 #[macro_use]
 extern crate serde_derive;
 
@@ -23,14 +20,46 @@ mod car;
 
 // Use modules
 use car::CarService;
-use std::thread;
-use r2d2_postgres::{PosgresConnectionManager, TlsMode};
-use uuid:Uuid;
-use chrono::offset::Utc;
+// use std::thread;
+use std::ops::Deref;
+use r2d2_postgres::{PostgresConnectionManager, TlsMode};
+// use uuid::Uuid;
+// use chrono::offset::Utc;
 use rocket_contrib::Json;
+use rocket::http::Status;
+use rocket::request::{self, FromRequest};
+use rocket::{Request, State, Outcome};
+
+// Take from environment variable
+// static DATABASE_URL: &'static str = env!("DATABASE_URL");
+
+pub struct DbConn(pub r2d2::PooledConnection<PostgresConnectionManager>);
+
+impl<'a, 'r> FromRequest<'a, 'r> for DbConn {
+    type Error = ();
+
+    fn from_request(request: &'a Request<'r>) -> request::Outcome<DbConn, ()> {
+        let pool = request.guard::<State<Pool>>()?;
+        match pool.get() {
+            Ok(conn) => Outcome::Success(DbConn(conn)),
+            Err(_) => Outcome::Failure((Status::ServiceUnavailable, ()))
+        }
+    }
+}
+
+// For the convenience of using an &DbConn as an PostgresConnectionManager
+impl Deref for DbConn {
+    type Target = r2d2::PooledConnection<r2d2_postgres::PostgresConnectionManager>;
+//    = note: expected type `&r2d2_postgres::PostgresConnectionManager`
+            //   found type `&r2d2::PooledConnection<r2d2_postgres::PostgresConnectionManager>`
+    
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 // An alias to the type for a pool of PostgresConnectionManager
-type Pool = r2d2::PooledConnectionManager<PostgresConnectionManager>;
+type Pool = r2d2::Pool<PostgresConnectionManager>;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct User {
@@ -66,6 +95,9 @@ fn search(search: Search) -> String {
     format!("got search query: {}", search.query)
 }
 
+// #[get("/tasks")]
+// fn get_tasks(conn: DbConn) -> 
+
 fn main() {
     let car = CarService::new(4.50);
     let cost = car.charge();
@@ -80,7 +112,7 @@ fn main() {
 
 
 fn init_pool() -> Pool {
-    let manager = PostgresConnectionManager::new("posgres://postgres@localhost/rustweb", TlsMode::None)
+    let manager = PostgresConnectionManager::new("posgres://postgres@172.20.21.232/rust_api", TlsMode::None)
         .unwrap();
-    r2d2::Pool::new(manager).unwrap()
+    r2d2::Pool::new(manager).expect("db pool") //.unwrap()
 }
