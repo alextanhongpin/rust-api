@@ -10,3 +10,18 @@ rocket_contrib = "0.3.6"
 serde = "1.0.29"
 serde_json = "1.0.10"
 serde_derive = "1.0.29"
+r2d2 = "0.8.2"
+r2d2_postgres = "0.14.0"
+
+# At the time of writing, uuid version 0.5 is required for postgres
+[dependencies.uuid]
+version = "0.5"
+features = ["v4", "serde"]
+
+[dependencies.chrono]
+version = "0.4.0"
+features = ["serde"]
+
+[dependencies.postgres]
+version = "0.15.2"
+features = ["with-bit-vec", "with-chrono", "with-serde_json", "with-uuid"]
