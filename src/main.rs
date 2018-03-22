@@ -53,18 +53,33 @@ fn search(search: Search) -> String {
 }
 
 fn main() {
+    // Initialization
+    let conn = db::connect();
+
+    {
+        let conn = conn.clone();
+        let db_conn = db::Connection(conn.get().unwrap());
+        car::Store::create_table(db_conn);
+        // match conn.get()  {
+            // Ok(conn) => car::Store::create_table(db::Connection(conn)),
+            // Err(err) => println!("error: {:?}", err),
+        // }
+        
+    }
+   
+    
     rocket::ignite()
-        .manage(db::connect())
+        .manage(conn)
         .mount(
             "/",
             routes![
                 index,
                 hello,
                 other::world,
-                car::route,
-                car::post_car,
                 new_user,
-                search
+                search,
+                car::get_cars,
+                car::post_car
             ],
         )
         .launch();

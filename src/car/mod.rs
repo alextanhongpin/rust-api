@@ -2,14 +2,11 @@ use chrono::DateTime;
 use chrono::offset::Utc;
 use uuid::Uuid;
 use rocket_contrib::Json;
+
 use db::Connection;
 
-pub struct CarService {
-	pool: Connection,
-}
-
 #[derive(Debug, Serialize, Deserialize)]
-pub struct PostCarRequest {
+pub struct PostRequest {
 	name: String,
 }
 
@@ -20,15 +17,11 @@ pub struct Car {
 	created_at: DateTime<Utc>,
 }
 
-impl CarService {
-	pub fn new(pool: Connection) -> Self {
-		CarService { pool }
-	}
+pub struct Store {}
 
-
-	pub fn create_table(&self) {
-		self
-			.pool
+impl Store {
+	pub fn create_table(conn: Connection) {
+			conn
 			.execute(
 				"CREATE TABLE IF NOT EXISTS car (
 				 	id 						UUID PRIMARY KEY,
@@ -40,15 +33,14 @@ impl CarService {
 			.unwrap();
 	}
 
-	pub fn insert_car(&self, name: String) -> Car {
+	pub fn create(conn: Connection, name: String) -> Car {
 		let new_car = Car {
 			id: Uuid::new_v4(),
 			created_at: Utc::now(),
 			name: name,
 		};
 
-		self
-			.pool
+		conn
 			.execute(
 				"INSERT INTO car (id, name, created_at) VALUES ($1, $2, $3)",
 				&[&new_car.id, &new_car.name, &new_car.created_at],
@@ -57,10 +49,9 @@ impl CarService {
 		new_car
 	}
 
-	pub fn all(&self) -> Vec<Car> {
+	pub fn all(conn: Connection) -> Vec<Car> {
 		let mut cars: Vec<Car> = vec![];
-		for row in &self
-			.pool
+		for row in &conn
 			.query("SELECT id, name, created_at FROM car", &[])
 			.unwrap()
 		{
@@ -71,22 +62,20 @@ impl CarService {
 			};
 			cars.push(car);
 		}
-		println!("got cars {:?}", cars);
 		cars
 	}
 }
 
+// Routes
+
 #[get("/cars")]
-pub fn route(conn: Connection) -> Json<Vec<Car>> {
-	let svc = CarService::new(conn);
-	Json(svc.all())
+pub fn get_cars(conn: Connection) -> Json<Vec<Car>> {
+	Json(Store::all(conn))
 }
 
 #[post("/cars", format = "application/json", data = "<car>")]
-pub fn post_car(car: Json<PostCarRequest>, conn: Connection) -> Json<Car> {
-	println!("{:?}", car);
+pub fn post_car(car: Json<PostRequest>, conn: Connection) -> Json<Car> {
 	let name = car.name.clone();
-	let svc = CarService::new(conn);
-	// svc.create_table();
-	Json(svc.insert_car(name))
+	// Store.create_table();
+	Json(Store::create(conn, name))
 }
