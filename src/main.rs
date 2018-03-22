@@ -64,10 +64,8 @@ fn main() {
             // Ok(conn) => car::Store::create_table(db::Connection(conn)),
             // Err(err) => println!("error: {:?}", err),
         // }
-        
     }
-   
-    
+
     rocket::ignite()
         .manage(conn)
         .mount(

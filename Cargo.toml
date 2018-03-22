@@ -1,5 +1,5 @@
 [package]
-name = "rust-rocket"
+name = "rust-api"
 version = "0.1.0"
 authors = ["alextanhongpin <alextan@seekasia.com>"]
 
