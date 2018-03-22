@@ -8,60 +8,17 @@ extern crate rocket_contrib;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-
 extern crate serde_json;
 
 extern crate r2d2;
 extern crate r2d2_postgres;
 extern crate uuid;
 
-// Import modules
 mod other;
 mod db;
 mod car;
 
-// Use modules
-// use car::CarService;
-// use std::thread;
-use std::ops::Deref;
-use r2d2_postgres::{PostgresConnectionManager, TlsMode};
-// use uuid::Uuid;
-// use chrono::offset::Utc;
 use rocket_contrib::Json;
-use rocket::http::Status;
-use rocket::request::{self, FromRequest};
-use rocket::{Outcome, Request, State};
-
-// Take from environment variable
-// static DATABASE_URL: &'static str = env!("DATABASE_URL");
-
-pub struct DbConn(pub r2d2::PooledConnection<PostgresConnectionManager>);
-
-impl<'a, 'r> FromRequest<'a, 'r> for DbConn {
-    type Error = ();
-
-    fn from_request(request: &'a Request<'r>) -> request::Outcome<DbConn, ()> {
-        let pool = request.guard::<State<Pool>>()?;
-        match pool.get() {
-            Ok(conn) => Outcome::Success(DbConn(conn)),
-            Err(_) => Outcome::Failure((Status::ServiceUnavailable, ())),
-        }
-    }
-}
-
-// For the convenience of using an &DbConn as an PostgresConnectionManager
-impl Deref for DbConn {
-    type Target = r2d2::PooledConnection<r2d2_postgres::PostgresConnectionManager>;
-    //    = note: expected type `&r2d2_postgres::PostgresConnectionManager`
-    //   found type `&r2d2::PooledConnection<r2d2_postgres::PostgresConnectionManager>`
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-// An alias to the type for a pool of PostgresConnectionManager
-type Pool = r2d2::Pool<PostgresConnectionManager>;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct User {
@@ -89,16 +46,11 @@ fn hello(name: String, age: u8) -> String {
 fn new_user(user: Json<User>) -> Json<User> {
     user
 }
-// #[get("/users/<id>", format = "application/json")]
-// fn user(id: usize) -> Json<User> {}
 
 #[get("/search?<search>")]
 fn search(search: Search) -> String {
     format!("got search query: {}", search.query)
 }
-
-// #[get("/tasks")]
-// fn get_tasks(conn: DbConn) ->
 
 fn main() {
     rocket::ignite()

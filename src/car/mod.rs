@@ -1,43 +1,11 @@
-extern crate r2d2_postgres;
-use r2d2;
-use r2d2_postgres::PostgresConnectionManager;
 use chrono::DateTime;
 use chrono::offset::Utc;
 use uuid::Uuid;
-use std::ops::Deref;
 use rocket_contrib::Json;
-use rocket::{Outcome, Request, State};
-use rocket::http::Status;
-use rocket::request::{self, FromRequest};
-
-type Pool = r2d2::Pool<PostgresConnectionManager>;
-pub struct DbConn(pub r2d2::PooledConnection<PostgresConnectionManager>);
-
-impl<'a, 'r> FromRequest<'a, 'r> for DbConn {
-	type Error = ();
-
-	fn from_request(request: &'a Request<'r>) -> request::Outcome<DbConn, ()> {
-		let pool = request.guard::<State<Pool>>()?;
-		match pool.get() {
-			Ok(conn) => Outcome::Success(DbConn(conn)),
-			Err(_) => Outcome::Failure((Status::ServiceUnavailable, ())),
-		}
-	}
-}
-// For the convenience of using an &DbConn as an PostgresConnectionManager
-impl Deref for DbConn {
-	type Target = r2d2::PooledConnection<r2d2_postgres::PostgresConnectionManager>;
-	//    = note: expected type `&r2d2_postgres::PostgresConnectionManager`
-	//   found type `&r2d2::PooledConnection<r2d2_postgres::PostgresConnectionManager>`
-
-	fn deref(&self) -> &Self::Target {
-		&self.0
-	}
-}
+use db::Connection;
 
 pub struct CarService {
-	cost: f64,
-	pool: DbConn,
+	pool: Connection,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -53,13 +21,10 @@ pub struct Car {
 }
 
 impl CarService {
-	pub fn new(cost: f64, pool: DbConn) -> Self {
-		CarService { cost, pool }
+	pub fn new(pool: Connection) -> Self {
+		CarService { pool }
 	}
 
-	pub fn charge(&self) -> &f64 {
-		&self.cost
-	}
 
 	pub fn create_table(&self) {
 		self
@@ -112,27 +77,16 @@ impl CarService {
 }
 
 #[get("/cars")]
-pub fn route(conn: DbConn) -> Json<Vec<Car>> {
-	let svc = CarService::new(5.0, conn);
+pub fn route(conn: Connection) -> Json<Vec<Car>> {
+	let svc = CarService::new(conn);
 	Json(svc.all())
 }
-// pub fn route() -> &'static str {
-// 	"car route"
-// }
 
 #[post("/cars", format = "application/json", data = "<car>")]
-pub fn post_car(car: Json<PostCarRequest>, conn: DbConn) -> Json<Car> {
+pub fn post_car(car: Json<PostCarRequest>, conn: Connection) -> Json<Car> {
 	println!("{:?}", car);
 	let name = car.name.clone();
-	let svc = CarService::new(4.50, conn);
+	let svc = CarService::new(conn);
 	// svc.create_table();
 	Json(svc.insert_car(name))
 }
-
-// #[get("/users/<id>", format = "application/json")]
-// fn user(id: usize) -> Json<User> {}
-
-// #[post("/users", format = "application/json", data = "<user>")]
-// fn new_user(user: Json<User>) -> Json<User> {
-// 	user
-// }
