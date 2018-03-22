@@ -16,5 +16,7 @@ services:
     image: alextanhongpin/rust-api
     environment:
       DATABASE_URL: posgres://postgres@docker.for.mac.localhost:5432/rust_api
+      ROCKET_ADDRESS: 0.0.0.0
+      ROCKET_PORT: 8000
     ports:
       - 8000:8000
