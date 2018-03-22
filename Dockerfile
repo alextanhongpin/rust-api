@@ -9,6 +9,12 @@ FROM ekidd/rust-musl-builder AS builder
 # Add our source code.
 ADD . /home/rust/src
 
+# RUN rustup update && cargo update
+EXPOSE 8000
+
+ENV ROCKET_ADDRESS=0.0.0.0
+ENV ROCKET_PORT=8000
+
 # Fix permissions on source code.
 RUN sudo chown -R rust:rust /home/rust
 
@@ -22,9 +28,6 @@ RUN rustup toolchain remove nightly
 RUN rustup default nightly
 
 RUN rustup target add x86_64-unknown-linux-musl
-
-# RUN rustup update && cargo update
-EXPOSE 8000
 
 # Build our application.
 RUN cargo build --release

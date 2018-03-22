@@ -17,4 +17,4 @@ services:
     environment:
       DATABASE_URL: posgres://postgres@docker.for.mac.localhost:5432/rust_api
     ports:
-      - 8000
+      - 8000:8000

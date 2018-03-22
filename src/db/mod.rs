@@ -13,7 +13,7 @@ pub type Pool = r2d2::Pool<PostgresConnectionManager>;
 static DATABASE_URL: &'static str = env!("DATABASE_URL");
 
 pub fn connect() -> Pool {
-	// posgres://postgres@172.20.21.232/rust_api
+	println!("connecting to: {}", DATABASE_URL);
     let manager =
         PostgresConnectionManager::new(DATABASE_URL, TlsMode::None)
             .unwrap();
