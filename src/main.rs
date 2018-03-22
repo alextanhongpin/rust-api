@@ -8,7 +8,7 @@ extern crate rocket_contrib;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-#[macro_use]
+
 extern crate serde_json;
 
 extern crate r2d2;
@@ -17,6 +17,7 @@ extern crate uuid;
 
 // Import modules
 mod other;
+mod db;
 mod car;
 
 // Use modules
@@ -100,13 +101,8 @@ fn search(search: Search) -> String {
 // fn get_tasks(conn: DbConn) ->
 
 fn main() {
-    // let car = CarService::new(4.50, pool);
-    // let cost = car.charge();
-    // println!("got charged: {}", cost);
-
-    // println!("Hello, world!");
     rocket::ignite()
-        .manage(init_pool())
+        .manage(db::connect())
         .mount(
             "/",
             routes![
@@ -120,11 +116,4 @@ fn main() {
             ],
         )
         .launch();
-}
-
-fn init_pool() -> Pool {
-    let manager =
-        PostgresConnectionManager::new("posgres://postgres@192.168.8.102/rust_api", TlsMode::None)
-            .unwrap();
-    r2d2::Pool::new(manager).expect("db pool") //.unwrap()
 }
