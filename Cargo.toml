@@ -26,12 +26,12 @@ features = ["serde"]
 version = "0.15.2"
 features = ["with-bit-vec", "with-chrono", "with-serde_json", "with-uuid"]
 
-# [development]
-# address = "localhost"
-# port = 8000
-# workers = 16
-# log = "normal"
-# limits = { forms = 32768 }
+[development]
+address = "localhost"
+port = 8000
+workers = 16
+log = "normal"
+limits = { forms = 32768 }
 
 # [production]
 # address = "0.0.0.0"

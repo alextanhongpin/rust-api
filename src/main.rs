@@ -54,12 +54,12 @@ fn search(search: Search) -> String {
 
 fn main() {
     // Initialization
-    let conn = db::connect();
+    let conn = db::client::connect();
 
     {
         let conn = conn.clone();
-        let db_conn = db::Connection(conn.get().unwrap());
-        car::Store::create_table(db_conn);
+        let db_conn = db::client::Connection(conn.get().unwrap());
+        car::store::Store::create_table(db_conn);
         // match conn.get()  {
             // Ok(conn) => car::Store::create_table(db::Connection(conn)),
             // Err(err) => println!("error: {:?}", err),
@@ -73,11 +73,11 @@ fn main() {
             routes![
                 index,
                 hello,
-                other::world,
+                other::world::world,
                 new_user,
                 search,
-                car::get_cars,
-                car::post_car
+                car::route::get_cars,
+                car::route::post_car
             ],
         )
         .launch();
